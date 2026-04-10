@@ -12,8 +12,7 @@ export const sequelize = new Sequelize(
     port: process.env.DB_PORT,
     dialect: "postgres",
     logging: false
-}
-
+    }
 );
 
 export async function connectDB(){
@@ -23,7 +22,7 @@ export async function connectDB(){
     }catch(e){
         console.log("DB connection Failed: ",e);
     }
-}
+};
 
 
 

@@ -36,7 +36,6 @@ PCB.hasMany(PCBLocation,{
     sourceKey: "pcb_id"
 });
 
-
 export {
     Vehicle,
     VehicleHistory,
