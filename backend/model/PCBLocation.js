@@ -8,11 +8,11 @@ const PCBLocation = sequelize.define("PCBLocation",{
     },
     latitude:{
         type: DataTypes.DECIMAL(10,7),
-        allowNull: false
+        allowNull: true
     },
     longitude:{
         type: DataTypes.DECIMAL(10,7),
-        allowNull: false
+        allowNull: true
     },
     last_updated:{
         type: DataTypes.DATE,
