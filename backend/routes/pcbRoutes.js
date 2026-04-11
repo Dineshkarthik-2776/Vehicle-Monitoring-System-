@@ -4,6 +4,6 @@ import express from "express";
 const router = express.Router();
 
 router.post( "/pcb/creation" ,createPCBController);
-router.post("/pcb/bulkCreation", bulkCreatePCBController)
+router.post("/pcb/bulkCreation", bulkCreatePCBController);
 
 export default router;

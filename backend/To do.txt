@@ -1,0 +1,10 @@
+API needed:
+
+0. Create PCB's in DB
+1. Map the Available PCB to the new Vehicle (ATTACH)
+2. Remove PCB - VIN mapping (DETACH)
+3. Bulk mapping using CSV file (List of VIN - PCB_ID, ATTACH)
+4. WEBSOCKET : to listen Data from PCB
+5. Re-allocate PCB to VIN (PCB swap)
+6. Get all Vehicles (currently available in plant)
+7. WEBSOCKET : PCB with low battery (for alert in frontend and mail / notification)

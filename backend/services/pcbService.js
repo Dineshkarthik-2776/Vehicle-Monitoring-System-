@@ -3,8 +3,8 @@ import PCB  from "../model/PCB.js";
 export async function createPCB(data){
     try{
 
-        if(!data.pcb_id || !data.battery_level){
-            throw new Error("Enter all the required data.");
+        if(!data.pcb_id){
+            throw new Error("Enter the required data (pcb_id).");
         }
 
         const exists = await PCB.findByPk(data.pcb_id);
@@ -15,9 +15,7 @@ export async function createPCB(data){
 
         const pcb = await PCB.create({
             pcb_id: data.pcb_id,
-            status: data.status || "AVAILABLE",
-            battery_level: data.battery_level,
-            last_seen: data.last_seen ? new Date(data.last_seen) : new Date()
+            status: data.status || "AVAILABLE"
         });
 
         return "PCB data inserted successfully"
@@ -36,9 +34,7 @@ export async function bulkCreatePCB(data){
 
         const pcbs = data.map((pcb) => ({
             pcb_id: pcb.pcb_id,
-            status: pcb.status || "AVAILABLE",
-            battery_level: pcb.battery_level,
-            last_seen: pcb.last_seen ? new Date(pcb.last_seen) : new Date()
+            status: pcb.status || "AVAILABLE"
         }));
 
         const res = await PCB.bulkCreate(pcbs, {

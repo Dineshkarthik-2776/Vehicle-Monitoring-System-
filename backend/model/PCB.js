@@ -12,9 +12,6 @@ const PCB = sequelize.define("PCB",{
     },
     battery_level:{
         type: DataTypes.DECIMAL(5,2)
-    },
-    last_seen:{
-        type: DataTypes.DATE
     }
 },{
     tableName: "pcb",
