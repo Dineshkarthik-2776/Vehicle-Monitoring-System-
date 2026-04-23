@@ -8,5 +8,5 @@
 - [ ] 5. WEBSOCKET : to listen Data from PCB
 - [ ] 6. swap available PCB with attached one to VIN (PCB swap)
 - [ ] 7. Get all Vehicles (currently available in plant)
-- [ ] 8. WEBSOCKET : PCB with low battery (for alert in frontend and mail / notification)
+- [ ] 8. WEBSOCKET : PCB with low battery / more time (for alert in frontend and mail / notification)
 - [x] 9. Mark PCB as faulty 1 api
