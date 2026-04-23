@@ -1,10 +1,19 @@
 import PCB  from "../model/PCB.js";
 import PCBLocation from "../model/PCBLocation.js";
+import Vehicle from "../model/Vehicle.js";
 
 import { Op, literal } from "sequelize";
 
 const ALLOWED_PCB_STATUS = new Set(["AVAILABLE", "ASSIGNED", "FAULTY"]);
 const ALLOWED_SORT_OPTIONS = new Set(["pcb_id", "battery_level", "pcb_id_asc", "battery_level_desc"]);
+
+function parsePcbId(value) {
+    const pcbId = Number(value);
+    if (!Number.isInteger(pcbId) || pcbId <= 0) {
+        return null;
+    }
+    return pcbId;
+}
 
 export async function createPCB(data){
     try{
@@ -12,9 +21,9 @@ export async function createPCB(data){
             throw new Error("Invalid payload");
         }
 
-        const pcbId = typeof data.pcb_id === "string" ? data.pcb_id.trim() : "";
+        const pcbId = parsePcbId(data.pcb_id);
         if(!pcbId){
-            throw new Error("Enter the required data (pcb_id).");
+            throw new Error("Enter the required data (pcb_id as positive integer).");
         }
 
         if (data.status && !ALLOWED_PCB_STATUS.has(data.status)) {
@@ -52,11 +61,11 @@ export async function bulkCreatePCB(data){
         }
 
         const hasInvalidRecord = data.some((pcb) => {
-            const pcbId = typeof pcb?.pcb_id === "string" ? pcb.pcb_id.trim() : "";
+            const pcbId = parsePcbId(pcb?.pcb_id);
             return !pcbId;
         });
         if (hasInvalidRecord) {
-            throw new Error("Each PCB must include pcb_id");
+            throw new Error("Each PCB must include pcb_id as positive integer");
         }
 
         const hasInvalidStatus = data.some((pcb) => pcb?.status && !ALLOWED_PCB_STATUS.has(pcb.status));
@@ -66,7 +75,7 @@ export async function bulkCreatePCB(data){
 
         const uniquePayloadMap = new Map();
         for (const pcb of data) {
-            const pcbId = pcb.pcb_id.trim();
+            const pcbId = parsePcbId(pcb.pcb_id);
             if (!uniquePayloadMap.has(pcbId)) {
                 uniquePayloadMap.set(pcbId, {
                     ...pcb,
@@ -184,9 +193,9 @@ export async function getPCB( filters = {}){
 export async function markPCBAsFaulty(pcb_id){
 
     try{
-        const pcbId = typeof pcb_id === "string" ? pcb_id.trim() : "";
+        const pcbId = parsePcbId(pcb_id);
         if (!pcbId) {
-            throw new Error("pcb_id is required");
+            throw new Error("pcb_id must be a positive integer");
         }
 
         const pcb = await PCB.findByPk(pcbId);
@@ -213,4 +222,37 @@ export async function markPCBAsFaulty(pcb_id){
         throw e;
     }
         
+}
+
+export async function getVINByPCBId(pcb_id) {
+    try {
+        const pcbId = parsePcbId(pcb_id);
+        if (!pcbId) {
+            throw new Error("pcb_id must be a positive integer");
+        }
+
+        const pcb = await PCB.findByPk(pcbId);
+        if (!pcb) {
+            throw new Error("PCB is not exist !");
+        }
+
+        // Vehicle table keeps the active mapping through current_pcb_id.
+        const vehicle = await Vehicle.findOne({
+            where: { current_pcb_id: pcbId },
+            attributes: ["vin", "current_pcb_id", "assigned_at"]
+        });
+
+        if (!vehicle) {
+            throw new Error("No vehicle mapped with this PCB");
+        }
+
+        return {
+            pcb_id: pcbId,
+            VIN: vehicle.vin,
+            assigned_at: vehicle.assigned_at
+        };
+    } catch (e) {
+        console.log("Error : ", e);
+        throw e;
+    }
 }

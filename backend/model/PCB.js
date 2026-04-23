@@ -3,7 +3,7 @@ import { sequelize } from "../config/DB.js";
 
 const PCB = sequelize.define("PCB",{
     pcb_id:{
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         primaryKey: true
     },
     status:{

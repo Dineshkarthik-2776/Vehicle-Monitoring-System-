@@ -2,11 +2,11 @@
 
 - [x] 0. Create PCB's in DB (single, bulk) 2 api
 - [x] 1. Get list of PCB's (filter : status, battery_level) 1 api
-- [ ] 2. Map the Available PCB to the new Vehicle (ATTACH)
-- [ ] 3. Remove PCB - VIN mapping (DETACH)
+- [x] 2. Map the PCB to the new Vehicle (ATTACH)
+- [x] 3. Remove PCB - VIN mapping (DETACH)
 - [ ] 4. Bulk mapping using CSV file (List of VIN - PCB_ID, ATTACH)
 - [ ] 5. WEBSOCKET : to listen Data from PCB
-- [ ] 6. Re-allocate PCB to VIN (PCB swap)
+- [ ] 6. swap available PCB with attached one to VIN (PCB swap)
 - [ ] 7. Get all Vehicles (currently available in plant)
 - [ ] 8. WEBSOCKET : PCB with low battery (for alert in frontend and mail / notification)
 - [x] 9. Mark PCB as faulty 1 api

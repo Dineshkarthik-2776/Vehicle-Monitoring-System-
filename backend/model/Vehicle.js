@@ -7,7 +7,7 @@ const Vehicle = sequelize.define("Vehicle",{
         primaryKey: true
     },
     current_pcb_id:{
-        type: DataTypes.STRING
+        type: DataTypes.INTEGER
     },
     assigned_at:{
         type: DataTypes.DATE,

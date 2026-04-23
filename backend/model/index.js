@@ -15,15 +15,6 @@ PCB.hasMany(Vehicle,{
     sourceKey: "pcb_id"
 });
 
-VehicleHistory.belongsTo(Vehicle,{
-    foreignKey: "vin",
-    targetKey: "vin"
-});
-
-Vehicle.hasMany(VehicleHistory,{
-    foreignKey: "vin",
-    sourceKey: "vin"
-});
 
 PCBLocation.belongsTo(PCB,{
     foreignKey: "pcb_id",
@@ -31,7 +22,7 @@ PCBLocation.belongsTo(PCB,{
     onDelete: "CASCADE",
 });
 
-PCB.hasMany(PCBLocation,{
+PCB.hasOne(PCBLocation,{
     foreignKey: "pcb_id",
     sourceKey: "pcb_id"
 });

@@ -1,4 +1,4 @@
-import { createPCB, bulkCreatePCB, getPCB, markPCBAsFaulty } from "../services/pcbService.js";
+import { createPCB, bulkCreatePCB, getPCB, markPCBAsFaulty, getVINByPCBId } from "../services/pcbService.js";
 
 export async function createPCBController(req,res){
     try{
@@ -70,9 +70,9 @@ export async function getPCBController(req, res){
 
 export async function markPCBAsFaultyController(req,res){
     try{
-        const pcbId = req.query.pcb_id ? String(req.query.pcb_id).trim() : "";
-        if (!pcbId) {
-            return res.status(400).json({ Error: "pcb_id is required" });
+        const pcbId = Number(req.query.pcb_id);
+        if (!Number.isInteger(pcbId) || pcbId <= 0) {
+            return res.status(400).json({ Error: "pcb_id must be a positive integer" });
         }
 
         await markPCBAsFaulty(pcbId);
@@ -86,4 +86,21 @@ export async function markPCBAsFaultyController(req,res){
             res.status(400).json({Error : e.message});
     }
     
+}
+
+export async function getVINByPCBIdController(req, res) {
+    try {
+        const pcbId = Number(req.query.pcb_id);
+        if (!Number.isInteger(pcbId) || pcbId <= 0) {
+            return res.status(400).json({ Error: "pcb_id must be a positive integer" });
+        }
+
+        const result = await getVINByPCBId(pcbId);
+        return res.status(200).json(result);
+    } catch (e) {
+        if (e.message === "PCB is not exist !" || e.message === "No vehicle mapped with this PCB") {
+            return res.status(404).json({ Error: e.message });
+        }
+        return res.status(400).json({ Error: e.message });
+    }
 }

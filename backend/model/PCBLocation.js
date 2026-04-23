@@ -3,7 +3,7 @@ import { sequelize } from "../config/DB.js";
 
 const PCBLocation = sequelize.define("PCBLocation",{
     pcb_id:{
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         primaryKey: true
     },
     latitude:{
