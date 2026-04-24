@@ -4,9 +4,9 @@
 - [x] 1. Get list of PCB's (filter : status, battery_level) 1 api
 - [x] 2. Map the PCB to the new Vehicle (ATTACH)
 - [x] 3. Remove PCB - VIN mapping (DETACH)
-- [ ] 4. Bulk mapping using CSV file (List of VIN - PCB_ID, ATTACH)
+- [x] 4. Bulk mapping using CSV file (List of VIN - PCB_ID, ATTACH)
 - [ ] 5. WEBSOCKET : to listen Data from PCB
-- [ ] 6. swap available PCB with attached one to VIN (PCB swap)
-- [ ] 7. Get all Vehicles (currently available in plant)
+- [x] 6. swap available PCB with attached one to VIN (PCB swap)
+- [x] 7. Get all Vehicles (currently available in plant)
 - [ ] 8. WEBSOCKET : PCB with low battery / more time (for alert in frontend and mail / notification)
 - [x] 9. Mark PCB as faulty 1 api

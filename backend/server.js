@@ -5,6 +5,7 @@ import {sequelize, connectDB} from './config/DB.js';
 import './model/index.js';
 
 import pcbRoutes from './routes/pcbRoutes.js';
+import vehicleRoutes from './routes/vehicleRoutes.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/', (req,res) => {
 });
 
 app.use('/VT/api', pcbRoutes);
+app.use('/VT/api', vehicleRoutes);
 
 (async () => {
     try{
