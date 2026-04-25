@@ -25,7 +25,7 @@ export async function mapPCBVINController(req,res){
 
     } catch(error) {
         return res.status(400).json({
-            error: error.message
+            Error: error.message
         });
     }
 
@@ -95,7 +95,7 @@ export async function bulkMapPCBVINController(req, res){
 
         if (!Array.isArray(mappings) || mappings.length === 0) {
             return res.status(400).json({
-                error: "Invalid input. 'mappings' must be a non-empty array"
+                Error: "Invalid input. 'mappings' must be a non-empty array"
             });
         }
 
@@ -105,7 +105,7 @@ export async function bulkMapPCBVINController(req, res){
 
     }catch(e){
         return res.status(400).json({
-            error: e.message
+            Error: e.message
         })
     }
 }
@@ -125,7 +125,7 @@ export async function getVehicleController(req, res){
 
     }catch(e){
         return res.status(500).json({
-            error: e.message
+            Error: e.message
         });
     }
 }

@@ -1,0 +1,279 @@
+openapi: 3.0.0
+info:
+  title: Vehicle Tracking API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/VT/api
+
+paths:
+
+  /pcb/creation:
+    post:
+      summary: Create single PCB
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              pcb_id: 101
+              status: AVAILABLE
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              example:
+                message: PCB data inserted successfully
+        "400":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: PCB already exists
+
+  /pcb/bulkCreation:
+    post:
+      summary: Bulk PCB creation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              pcbs:
+                - pcb_id: 101
+                  status: AVAILABLE
+                - pcb_id: 102
+                  status: AVAILABLE
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              example:
+                message: Bulk PCB creation completed
+                createdCount: 2
+                skippedCount: 0
+        "400":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: Invalid PCB list
+
+  /pcb:
+    get:
+      summary: Get PCB with filters
+      parameters:
+        - name: status
+          in: query
+          example: AVAILABLE
+        - name: battery_level_lte
+          in: query
+          example: 50
+        - name: sort_by
+          in: query
+          example: battery_level
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                - pcb_id: 101
+                  status: AVAILABLE
+                  battery_level: 80
+
+        "400":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: Invalid status
+
+  /pcb/faulty:
+    post:
+      summary: Mark PCB as faulty
+      parameters:
+        - name: pcb_id
+          in: query
+          required: true
+          example: 101
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                message: Successfully marked as Faulty
+        "404":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: PCB is not exist !
+
+  /pcb/vin:
+    get:
+      summary: Get VIN by PCB ID
+      parameters:
+        - name: pcb_id
+          in: query
+          required: true
+          example: 101
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                pcb_id: 101
+                VIN: VIN001
+                assigned_at: 2026-04-25T10:00:00Z
+
+        "404":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: No vehicle mapped with this PCB
+
+  /vehicle/attach:
+    post:
+      summary: Attach PCB to Vehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              pcb_id: 101
+              VIN: VIN001
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                success: true
+                message: PCB successfully mapped to Vehicle
+                pcb_id: 101
+                VIN: VIN001
+        "400":
+          description: Failure
+          content:
+            application/json:
+              example:
+                error: PCB 101 is Faulty PCB cant assign
+
+  /vehicle/detach:
+    post:
+      summary: Detach PCB from Vehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              pcb_id: 101
+              VIN: VIN001
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                pcb_id: 101
+                VIN: VIN001
+                message: PCB detached successfully
+
+        "409":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: Given VIN is not mapped with the given pcb_id
+
+  /vehicle/swap:
+    post:
+      summary: Swap PCB
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              current_pcb_id: 101
+              new_pcb_id: 102
+              VIN: VIN001
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                message: PCB swapped successfully
+                vin: VIN001
+                old_pcb: 101
+                new_pcb: 102
+
+        "409":
+          description: Failure
+          content:
+            application/json:
+              example:
+                Error: New PCB is already assigned
+
+  /vehicle/bulkAttach:
+    post:
+      summary: Bulk attach PCB to vehicles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              mappings:
+                - VIN: VIN001
+                  pcb_id: 101
+                - VIN: VIN002
+                  pcb_id: 102
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                message: Bulk attach Successful
+                total: 2
+                details:
+                  - VIN: VIN001
+                    pcb_id: 101
+                    status: Success
+
+        "400":
+          description: Failure
+          content:
+            application/json:
+              example:
+                error: PCB 101 is already assigned
+
+  /vehicle:
+    get:
+      summary: Get vehicles (all or by VIN)
+      parameters:
+        - name: vin
+          in: query
+          example: VIN001
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              example:
+                vin: VIN001
+                current_pcb_id: 101
+                assigned_at: 2026-04-25T10:00:00Z
+
+        "500":
+          description: Failure
+          content:
+            application/json:
+              example:
+                error: Vehicle not found
