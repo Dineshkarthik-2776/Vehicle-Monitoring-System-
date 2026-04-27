@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket API Test - Vehicle Monitoring System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-connect {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-connect:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-send {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-clear {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .status.disconnected {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        #messageLog {
+            height: 300px;
+            overflow-y: auto;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .message-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-left: 3px solid #667eea;
+            background: white;
+            border-radius: 3px;
+        }
+
+        .message-item.received {
+            border-left-color: #48bb78;
+        }
+
+        .message-item.sent {
+            border-left-color: #4299e1;
+        }
+
+        .message-item.error {
+            border-left-color: #f56565;
+        }
+
+        .timestamp {
+            font-size: 0.75em;
+            color: #a0aec0;
+            margin-right: 10px;
+        }
+
+        .sample-templates {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .sample-templates h4 {
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .template-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #2d3748;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .template-btn:hover {
+            background: #e2e8f0;
+            border-color: #a0aec0;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #c53030;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Vehicle Monitoring System</h1>
+            <p>WebSocket API Test Console</p>
+        </div>
+
+        <div class="content">
+            <!-- Connection Panel -->
+            <div class="card">
+                <h2>Connection Settings</h2>
+                <div id="status" class="status disconnected">⚫ Disconnected</div>
+                
+                <div class="form-group">
+                    <label for="wsUrl">WebSocket URL</label>
+                    <input 
+                        type="text" 
+                        id="wsUrl" 
+                        value="ws://localhost:8080"
+                        placeholder="ws://localhost:8080"
+                    >
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-connect" id="connectBtn" onclick="connectWebSocket()">
+                        🔗 Connect
+                    </button>
+                    <button class="btn-connect" id="disconnectBtn" onclick="disconnectWebSocket()" disabled style="background: #f56565;">
+                        🔌 Disconnect
+                    </button>
+                </div>
+
+                <h2 style="margin-top: 25px;">Message Templates</h2>
+                <div class="sample-templates">
+                    <h4>Sample Data Formats:</h4>
+                    <button class="template-btn" onclick="loadTemplate('vehicle')">
+                        📍 Vehicle Location Update
+                    </button>
+                    <button class="template-btn" onclick="loadTemplate('pcb')">
+                        🔋 PCB Sensor Data
+                    </button>
+                    <button class="template-btn" onclick="loadTemplate('alert')">
+                        ⚠️ Alert Message
+                    </button>
+                    <button class="template-btn" onclick="loadTemplate('custom')">
+                        ✏️ Custom Message
+                    </button>
+                </div>
+            </div>
+
+            <!-- Send Message Panel -->
+            <div class="card">
+                <h2>Send Message</h2>
+                <div class="form-group">
+                    <label for="messageInput">Message (JSON Format)</label>
+                    <textarea 
+                        id="messageInput" 
+                        placeholder='{"command":"#test","pcb_id":"PCB001","latitude":40.7128,"longitude":-74.0060,"battery":85}'
+                    ></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>
+                        📤 Send
+                    </button>
+                    <button class="btn-clear" onclick="document.getElementById('messageInput').value = ''">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Log Panel -->
+            <div class="card full-width">
+                <h2>Message Log</h2>
+                <button class="btn-clear" onclick="clearLog()" style="width: 100%; margin-bottom: 10px;">
+                    🗑️ Clear Log
+                </button>
+                <div id="messageLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+
+        function getTimestamp() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+        }
+
+        function addMessage(type, message) {
+            const log = document.getElementById('messageLog');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-item ${type}`;
+            
+            const timestamp = `<span class="timestamp">[${getTimestamp()}]</span>`;
+            const content = `<strong>${type.toUpperCase()}:</strong> ${escapeHtml(message)}`;
+            
+            messageDiv.innerHTML = timestamp + content;
+            log.appendChild(messageDiv);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStatus(connected, message = null) {
+            const statusDiv = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.textContent = '🟢 Connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = `⚫ Disconnected${message ? ': ' + message : ''}`;
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+
+        function connectWebSocket() {
+            const url = document.getElementById('wsUrl').value;
+            
+            if (!url) {
+                addMessage('error', 'Please enter a WebSocket URL');
+                return;
+            }
+
+            try {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    addMessage('info', '✅ WebSocket connection established');
+                    updateStatus(true);
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addMessage('received', JSON.stringify(data, null, 2));
+                    } catch (e) {
+                        addMessage('received', event.data);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    addMessage('error', `❌ WebSocket error: ${error.message || 'Unknown error'}`);
+                    updateStatus(false, 'Error');
+                };
+
+                ws.onclose = () => {
+                    addMessage('info', '❌ WebSocket connection closed');
+                    updateStatus(false);
+                    ws = null;
+                };
+            } catch (error) {
+                addMessage('error', `Failed to connect: ${error.message}`);
+                updateStatus(false, error.message);
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                addMessage('info', 'Disconnecting...');
+                updateStatus(false);
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput').value.trim();
+
+            if (!input) {
+                addMessage('error', 'Please enter a message');
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                addMessage('error', 'WebSocket is not connected');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(input);
+                ws.send(JSON.stringify(data));
+                addMessage('sent', JSON.stringify(data, null, 2));
+                document.getElementById('messageInput').value = '';
+            } catch (error) {
+                addMessage('error', `Invalid JSON: ${error.message}`);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('messageLog').innerHTML = '';
+        }
+
+        function loadTemplate(type) {
+            const templates = {
+                vehicle: {
+                    command: '#test',
+                    pcb_id: 'PCB001',
+                    latitude: 40.7128,
+                    longitude: -74.0060,
+                    battery: 84,
+                    timestamp: new Date().toISOString()
+                },
+                pcb: {
+                    command: '#test',
+                    pcb_id: 'PCB001',
+                    battery: 85,
+                    latitude: 40.7128,
+                    longitude: -74.0060,
+                    timestamp: new Date().toISOString()
+                },
+                alert: {
+                    command: '#test',
+                    pcb_id: 'PCB002',
+                    battery: 12,
+                    latitude: 40.7161,
+                    longitude: -74.0019,
+                    message: 'Low battery test sample',
+                    timestamp: new Date().toISOString()
+                },
+                custom: {
+                    command: '#test',
+                    pcb_id: 'PCB001',
+                    latitude: 0,
+                    longitude: 0,
+                    battery: 100,
+                    data: 'Your custom data here'
+                }
+            };
+
+            const template = templates[type] || templates.custom;
+            document.getElementById('messageInput').value = JSON.stringify(template, null, 2);
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize
+        updateStatus(false);
+        addMessage('info', '👋 WebSocket Test Console Ready. Enter connection URL and click Connect.');
+    </script>
+</body>
+</html>
