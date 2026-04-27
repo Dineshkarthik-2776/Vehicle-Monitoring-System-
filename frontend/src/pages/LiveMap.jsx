@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useApp } from '../context/AppContext';
+import { useApp, YARD_CENTER } from '../context/AppContext';
 import VehiclePopup from '../components/map/VehiclePopup';
 import './LiveMap.css';
 
@@ -17,10 +17,12 @@ L.Icon.Default.mergeOptions({
 // Custom truck icon — highlight if recently updated
 function makeTruckIcon(color = '#14b88a', pulsing = false) {
   const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-    ${pulsing ? `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2">
-      <animate attributeName="r" from="14" to="19" dur="1.2s" repeatCount="indefinite" />
-      <animate attributeName="fill-opacity" from="0.3" to="0" dur="1.2s" repeatCount="indefinite" />
-    </circle>` : `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="1.5"/>`}
+    ${pulsing
+      ? `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2">
+          <animate attributeName="r" from="14" to="19" dur="1.2s" repeatCount="indefinite" />
+          <animate attributeName="fill-opacity" from="0.3" to="0" dur="1.2s" repeatCount="indefinite" />
+        </circle>`
+      : `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="1.5"/>`}
     <rect x="10" y="14" width="16" height="10" rx="2" fill="${color}"/>
     <rect x="10" y="14" width="10" height="10" rx="2" fill="${color}" opacity="0.7"/>
     <circle cx="13" cy="25" r="2" fill="white"/>
@@ -35,42 +37,57 @@ function makeTruckIcon(color = '#14b88a', pulsing = false) {
   });
 }
 
-// Fly-to helper
-function FlyTo({ coords }) {
+// Fly-to helper — handles both refocus-to-yard and navigate-to-vehicle
+function MapController({ flyTarget, refocusTick }) {
   const map = useMap();
+  const prevRefocusTick = useRef(refocusTick);
+
+  // Fly to a specific vehicle location
   useEffect(() => {
-    if (coords) map.flyTo(coords, 16, { duration: 1.2 });
-  }, [coords, map]);
+    if (flyTarget) {
+      map.flyTo([flyTarget.lat, flyTarget.lng], 17, { duration: 1.2 });
+    }
+  }, [flyTarget, map]);
+
+  // Refocus to yard center when refresh is triggered
+  useEffect(() => {
+    if (refocusTick !== prevRefocusTick.current) {
+      prevRefocusTick.current = refocusTick;
+      map.flyTo([YARD_CENTER.lat, YARD_CENTER.lng], 16, { duration: 1.0 });
+    }
+  }, [refocusTick, map]);
+
   return null;
 }
 
-const DEFAULT_CENTER = [13.0827, 80.2707]; // Chennai
-
 export default function LiveMap() {
-  const { inYardVehicles } = useApp();
+  const { inYardVehicles, mapRefocusTick } = useApp();
   const [selected, setSelected] = useState(null);
   const [flyTarget, setFlyTarget] = useState(null);
-  // Track recently-updated PCBs for pulse animation (pcb_id → timeout)
   const [recentUpdates, setRecentUpdates] = useState({});
   const timerRef = useRef({});
 
-  // Watch for location changes and pulse the marker for 3 seconds
+  // Pulse marker for 3 seconds after a location update arrives via WS
   useEffect(() => {
     inYardVehicles.forEach(v => {
       const loc = v.location;
       if (!loc) return;
       const key = `${v.current_pcb_id}-${loc.updated}`;
-      if (timerRef.current[v.current_pcb_id] === key) return; // already seen
+      if (timerRef.current[v.current_pcb_id] === key) return;
 
       timerRef.current[v.current_pcb_id] = key;
       setRecentUpdates(prev => ({ ...prev, [v.current_pcb_id]: true }));
       setTimeout(() => {
-        setRecentUpdates(prev => { const n = { ...prev }; delete n[v.current_pcb_id]; return n; });
+        setRecentUpdates(prev => {
+          const n = { ...prev };
+          delete n[v.current_pcb_id];
+          return n;
+        });
       }, 3000);
     });
   }, [inYardVehicles]);
 
-  // Keep selected vehicle data in sync with live updates
+  // Keep selected vehicle data live
   useEffect(() => {
     if (!selected) return;
     const updated = inYardVehicles.find(v => v.vin === selected.vin);
@@ -82,14 +99,17 @@ export default function LiveMap() {
   }
 
   function handleNavigate(v) {
-    if (v.location) setFlyTarget([v.location.lat, v.location.lng]);
+    if (v.location) {
+      setFlyTarget({ lat: v.location.lat, lng: v.location.lng });
+      setSelected(null);
+    }
   }
 
   return (
     <div className="livemap">
       <MapContainer
-        center={DEFAULT_CENTER}
-        zoom={13}
+        center={[YARD_CENTER.lat, YARD_CENTER.lng]}
+        zoom={16}
         className="livemap__map"
         zoomControl={false}
       >
@@ -98,28 +118,16 @@ export default function LiveMap() {
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         />
 
-        {inYardVehicles.map(v => (
-          <React.Fragment key={v.vin}>
-            <Circle
-              center={[v.location.lat, v.location.lng]}
-              radius={300}
-              pathOptions={{
-                color: '#14b88a',
-                fillColor: '#14b88a',
-                fillOpacity: 0.06,
-                weight: 1.5,
-                dashArray: '6 4',
-              }}
-            />
-            <Marker
-              position={[v.location.lat, v.location.lng]}
-              icon={makeTruckIcon('#14b88a', !!recentUpdates[v.current_pcb_id])}
-              eventHandlers={{ click: () => handleMarkerClick(v) }}
-            />
-          </React.Fragment>
-        ))}
+        <MapController flyTarget={flyTarget} refocusTick={mapRefocusTick} />
 
-        {flyTarget && <FlyTo coords={flyTarget} />}
+        {inYardVehicles.map(v => (
+          <Marker
+            key={v.vin}
+            position={[v.location.lat, v.location.lng]}
+            icon={makeTruckIcon('#14b88a', !!recentUpdates[v.current_pcb_id])}
+            eventHandlers={{ click: () => handleMarkerClick(v) }}
+          />
+        ))}
       </MapContainer>
 
       {/* Zoom controls */}
@@ -133,7 +141,7 @@ export default function LiveMap() {
         <div className="livemap__popup-wrap">
           <VehiclePopup
             vehicle={selected}
-            onNavigate={() => { handleNavigate(selected); setSelected(null); }}
+            onNavigate={() => handleNavigate(selected)}
             onClose={() => setSelected(null)}
           />
         </div>
@@ -149,7 +157,7 @@ export default function LiveMap() {
         </div>
         <div>
           <div className="livemap__stats-count">{inYardVehicles.length}</div>
-          <div className="livemap__stats-label">Vehicles in yard</div>
+          <div className="livemap__stats-label">Vehicles with GPS</div>
         </div>
       </div>
     </div>

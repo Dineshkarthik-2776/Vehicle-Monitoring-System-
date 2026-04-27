@@ -164,6 +164,68 @@
   color: var(--text-muted);
 }
 
+/* ── Charts row ── */
+.bat-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Chart card */
+.bat-chart-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bat-chart-card__header {
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bat-chart-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bat-chart-card__sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.bat-chart-card__body {
+  padding: 14px 8px 8px;
+}
+
+/* Chart tooltip */
+.bat-chart-tooltip {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+}
+.bat-chart-tooltip__label {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.bat-chart-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.bat-chart-tooltip__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.bat-chart-tooltip__name { color: var(--text-secondary); }
+.bat-chart-tooltip__val  { font-weight: 700; color: var(--text-primary); margin-left: auto; padding-left: 8px; }
+
 /* Alert banner */
 .bat-alert {
   display: flex;
@@ -304,6 +366,12 @@
   color: var(--text-muted);
 }
 
+/* Recharts legend */
+.recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .battery-page__overview {
@@ -314,5 +382,8 @@
   }
   .bat-summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .bat-charts-row {
+    grid-template-columns: 1fr;
   }
 }

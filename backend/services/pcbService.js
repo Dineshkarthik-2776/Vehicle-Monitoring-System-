@@ -1,4 +1,3 @@
-
 import PCB  from "../model/PCB.js";
 import PCBLocation from "../model/PCBLocation.js";
 import Vehicle from "../model/Vehicle.js";
@@ -143,7 +142,11 @@ export async function bulkCreatePCB(data){
     }
 }
 
-export async function getPCB( filters = {}){
+/**
+ * Returns all PCBs with their associated PCBLocation included.
+ * The frontend uses the nested PCBLocation to populate the map.
+ */
+export async function getPCB(filters = {}){
     try{
         if (!filters || typeof filters !== "object") {
             throw new Error("Invalid filters");
@@ -181,7 +184,17 @@ export async function getPCB( filters = {}){
             }
         }
 
-        const pcbs = await PCB.findAll({ where, order });
+        const pcbs = await PCB.findAll({
+            where,
+            order,
+            include: [
+                {
+                    model: PCBLocation,
+                    required: false,   // LEFT JOIN — include PCBs without a location row
+                }
+            ]
+        });
+
         return pcbs;
 
     }catch (e){
@@ -236,7 +249,6 @@ export async function getVINByPCBId(pcb_id) {
             throw new Error("PCB is not exist !");
         }
 
-        // Vehicle table keeps the active mapping through current_pcb_id.
         const vehicle = await Vehicle.findOne({
             where: { current_pcb_id: pcbId },
             attributes: ["vin", "current_pcb_id", "assigned_at"]

@@ -24,4 +24,9 @@ export const vehicleApi = {
   bulkAttach:  (mappings)      => api.post('/vehicle/bulkAttach', { mappings }),
 };
 
+// ── Analytics ─────────────────────────────────────────────────────────────────
+export const analyticsApi = {
+  getTodayStats: () => api.get('/analytics/today-stats'),
+};
+
 export default api;

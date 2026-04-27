@@ -1,4 +1,8 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  Cell, CartesianGrid, RadialBarChart, RadialBar, Legend,
+} from 'recharts';
 import { BatteryCharging, BatteryFull, BatteryLow, BatteryMedium, Zap, Download } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { generateBatteryPDF } from '../services/pdfExport';
@@ -46,10 +50,39 @@ function Doughnut({ segments, size = 180 }) {
   return <canvas ref={canvasRef} style={{ width: size, height: size }} />;
 }
 
+/* ── custom tooltip ── */
+function ChartTooltip({ active, payload, label, unit = '' }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bat-chart-tooltip">
+      {label && <div className="bat-chart-tooltip__label">{label}</div>}
+      {payload.map((p, i) => (
+        <div key={i} className="bat-chart-tooltip__row">
+          <span className="bat-chart-tooltip__dot" style={{ background: p.color || p.fill }} />
+          <span className="bat-chart-tooltip__name">{p.name}:</span>
+          <span className="bat-chart-tooltip__val">{p.value}{unit}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Chart card wrapper ── */
+function ChartCard({ title, sub, children }) {
+  return (
+    <div className="bat-chart-card">
+      <div className="bat-chart-card__header">
+        <div className="bat-chart-card__title">{title}</div>
+        {sub && <div className="bat-chart-card__sub">{sub}</div>}
+      </div>
+      <div className="bat-chart-card__body">{children}</div>
+    </div>
+  );
+}
+
 /* ── PCB card ── */
 function PCBCard({ pcb, tier }) {
   const battery = pcb.battery_level != null ? parseFloat(pcb.battery_level) : null;
-
   const barColor =
     tier === 'good'     ? '#14b88a' :
     tier === 'moderate' ? '#f59e0b' : '#ef4444';
@@ -108,11 +141,47 @@ export default function Battery() {
     ? (pcbs.reduce((s, p) => s + (parseFloat(p.battery_level) || 0), 0) / pcbs.length).toFixed(1)
     : 0;
 
-  const segments = [
+  const doughnutSegments = [
     { value: goodBatteryPcbs.length,     color: '#14b88a' },
     { value: moderateBatteryPcbs.length, color: '#f59e0b' },
     { value: criticalBatteryPcbs.length, color: '#ef4444' },
     { value: unknownBatteryPcbs.length,  color: '#d1d5db' },
+  ];
+
+  /* ── Battery distribution bar chart data ── */
+  const batteryDistData = [
+    {
+      range: '0–20%',
+      count: pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) <= 20).length,
+      fill: '#ef4444',
+    },
+    {
+      range: '21–40%',
+      count: pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) > 20 && parseFloat(p.battery_level) <= 40).length,
+      fill: '#f59e0b',
+    },
+    {
+      range: '41–60%',
+      count: pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) > 40 && parseFloat(p.battery_level) <= 60).length,
+      fill: '#eab308',
+    },
+    {
+      range: '61–80%',
+      count: pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) > 60 && parseFloat(p.battery_level) <= 80).length,
+      fill: '#84cc16',
+    },
+    {
+      range: '81–100%',
+      count: pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) > 80).length,
+      fill: '#14b88a',
+    },
+  ];
+
+  /* ── Battery health radial data ── */
+  const radialData = [
+    { name: 'Good',     value: goodBatteryPcbs.length,     fill: '#14b88a' },
+    { name: 'Moderate', value: moderateBatteryPcbs.length, fill: '#f59e0b' },
+    { name: 'Critical', value: criticalBatteryPcbs.length, fill: '#ef4444' },
   ];
 
   function handleDownloadPDF() {
@@ -133,58 +202,66 @@ export default function Battery() {
         </button>
       </div>
 
-      {/* Overview row */}
+      {/* Overview row: doughnut + summary stats */}
       <div className="battery-page__overview">
-        {/* Doughnut */}
         <div className="bat-donut-card">
-          <div className="bat-donut-card__chart">
-            <div className="bat-donut-card__canvas-wrap">
-              <Doughnut segments={segments} size={180} />
-              <div className="bat-donut-card__center">
-                <span className="bat-donut-card__total">{total}</span>
-                <span className="bat-donut-card__total-label">PCBs</span>
-              </div>
+          <div className="bat-donut-card__canvas-wrap">
+            <Doughnut segments={doughnutSegments} size={180} />
+            <div className="bat-donut-card__center">
+              <span className="bat-donut-card__total">{total}</span>
+              <span className="bat-donut-card__total-label">PCBs</span>
             </div>
           </div>
           <div className="bat-donut-card__legend">
-            <LegendItem color="#14b88a" label="Good (≥80%)"     value={goodBatteryPcbs.length} />
+            <LegendItem color="#14b88a" label="Good (≥80%)"       value={goodBatteryPcbs.length} />
             <LegendItem color="#f59e0b" label="Moderate (30–79%)" value={moderateBatteryPcbs.length} />
-            <LegendItem color="#ef4444" label="Critical (<30%)"  value={criticalBatteryPcbs.length} />
-            <LegendItem color="#d1d5db" label="Unknown"          value={unknownBatteryPcbs.length} />
+            <LegendItem color="#ef4444" label="Critical (<30%)"   value={criticalBatteryPcbs.length} />
+            <LegendItem color="#d1d5db" label="Unknown"           value={unknownBatteryPcbs.length} />
           </div>
         </div>
 
-        {/* Summary stats */}
         <div className="bat-summary-grid">
-          <SummaryCard
-            color="#14b88a"
-            value={goodBatteryPcbs.length}
-            label="Good"
-            sub="≥ 80% battery"
-            icon={<BatteryFull size={20}/>}
-          />
-          <SummaryCard
-            color="#f59e0b"
-            value={moderateBatteryPcbs.length}
-            label="Moderate"
-            sub="30% – 79%"
-            icon={<BatteryMedium size={20}/>}
-          />
-          <SummaryCard
-            color="#ef4444"
-            value={criticalBatteryPcbs.length}
-            label="Critical"
-            sub="< 30% battery"
-            icon={<BatteryLow size={20}/>}
-          />
-          <SummaryCard
-            color="var(--teal-500)"
-            value={`${avgBattery}%`}
-            label="Fleet Avg"
-            sub="average battery"
-            icon={<Zap size={20}/>}
-          />
+          <SummaryCard color="#14b88a" value={goodBatteryPcbs.length}     label="Good"     sub="≥ 80% battery"  icon={<BatteryFull size={20}/>} />
+          <SummaryCard color="#f59e0b" value={moderateBatteryPcbs.length} label="Moderate" sub="30% – 79%"      icon={<BatteryMedium size={20}/>} />
+          <SummaryCard color="#ef4444" value={criticalBatteryPcbs.length} label="Critical" sub="< 30% battery"  icon={<BatteryLow size={20}/>} />
+          <SummaryCard color="var(--teal-500)" value={`${avgBattery}%`}  label="Fleet Avg" sub="average battery" icon={<Zap size={20}/>} />
         </div>
+      </div>
+
+      {/* Charts row: Battery distribution bar + Battery health radial */}
+      <div className="bat-charts-row">
+        <ChartCard title="Battery Distribution" sub="PCB count by charge range">
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={batteryDistData} barSize={36} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="range" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<ChartTooltip unit=" PCBs" />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
+              <Bar dataKey="count" name="PCBs" radius={[5, 5, 0, 0]}>
+                {batteryDistData.map((entry, i) => (
+                  <Cell key={i} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Battery Health" sub="Good / Moderate / Critical">
+          <ResponsiveContainer width="100%" height={200}>
+            <RadialBarChart
+              cx="50%" cy="50%"
+              innerRadius="25%" outerRadius="90%"
+              data={radialData}
+              startAngle={90} endAngle={-270}
+            >
+              <RadialBar minAngle={8} dataKey="value" cornerRadius={6} label={false}>
+                {radialData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+              </RadialBar>
+              <Tooltip content={<ChartTooltip unit=" PCBs" />} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+            </RadialBarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
 
       {/* Critical alert banner */}
@@ -197,27 +274,9 @@ export default function Battery() {
       )}
 
       {/* Three sections */}
-      <BatterySection
-        tier="good"
-        label="Good Battery"
-        icon={<BatteryFull size={18}/>}
-        pcbs={goodBatteryPcbs}
-        accent="#14b88a"
-      />
-      <BatterySection
-        tier="moderate"
-        label="Moderate Battery"
-        icon={<BatteryMedium size={18}/>}
-        pcbs={moderateBatteryPcbs}
-        accent="#f59e0b"
-      />
-      <BatterySection
-        tier="critical"
-        label="Critical Battery"
-        icon={<BatteryLow size={18}/>}
-        pcbs={criticalBatteryPcbs}
-        accent="#ef4444"
-      />
+      <BatterySection tier="good"     label="Good Battery"     icon={<BatteryFull size={18}/>}   pcbs={goodBatteryPcbs}     accent="#14b88a" />
+      <BatterySection tier="moderate" label="Moderate Battery" icon={<BatteryMedium size={18}/>} pcbs={moderateBatteryPcbs} accent="#f59e0b" />
+      <BatterySection tier="critical" label="Critical Battery" icon={<BatteryLow size={18}/>}    pcbs={criticalBatteryPcbs} accent="#ef4444" />
     </div>
   );
 }
