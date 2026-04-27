@@ -182,7 +182,7 @@ export async function swapPCB(current_pcb_id, new_pcb_id, vin){
 
         //PCB Fetch
         const currentPCB = await PCB.findByPk(currentPcbId, {transaction});
-        const newPCB = await PCB.findByPk(newPcbId, {trnsactions});
+        const newPCB = await PCB.findByPk(newPcbId, { transaction });
 
         if(!currentPCB){
             throw new Error("Current PCB not found");
@@ -218,8 +218,7 @@ export async function swapPCB(current_pcb_id, new_pcb_id, vin){
         //update Vehicle
         await vehicle.update(
             {
-                current_pcb_id: newPcbId,
-                last_movement_at: new Date()
+                current_pcb_id: newPcbId
             },
             {transaction}
         );
