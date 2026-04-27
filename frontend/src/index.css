@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Brand */
+  --teal-50:  #f0fdf8;
+  --teal-100: #ccfbee;
+  --teal-200: #99f6dc;
+  --teal-400: #2dd4a4;
+  --teal-500: #14b88a;
+  --teal-600: #0d9370;
+  --teal-700: #0a7459;
+
+  /* Neutrals */
+  --gray-50:  #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* Semantic */
+  --bg-primary:   #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-sidebar:   #ffffff;
+  --border:       #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted:   #9ca3af;
+
+  /* Status */
+  --status-active:   #14b88a;
+  --status-inactive: #f59e0b;
+  --status-faulty:   #ef4444;
+
+  /* Sidebar */
+  --sidebar-width: 260px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-popup: 0 12px 40px rgba(0,0,0,0.15);
+
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --bg-primary:   #0f1117;
+  --bg-secondary: #161b27;
+  --bg-sidebar:   #0f1117;
+  --border:       #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted:   #6b7280;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-popup: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 99px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--gray-700); }
+
+/* Leaflet overrides */
+.leaflet-container {
+  background: var(--bg-secondary);
+  font-family: 'DM Sans', sans-serif;
+}
+.leaflet-control-zoom a {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-primary) !important;
+  background: var(--bg-primary) !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--shadow-md) !important;
+}

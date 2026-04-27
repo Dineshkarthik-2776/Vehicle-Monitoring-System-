@@ -1,0 +1,133 @@
+.veh-popup {
+  width: 260px;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-popup);
+  font-family: 'DM Sans', sans-serif;
+  border: 1px solid var(--border);
+}
+
+.veh-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.veh-popup__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.veh-popup__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal-500);
+  flex-shrink: 0;
+}
+
+.veh-popup__vin {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.veh-popup__badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--teal-50);
+  color: var(--teal-600);
+  border: 1px solid var(--teal-100);
+}
+[data-theme="dark"] .veh-popup__badge {
+  background: rgba(20,184,138,0.12);
+  color: var(--teal-400);
+  border-color: rgba(20,184,138,0.2);
+}
+
+.veh-popup__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.veh-popup__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.veh-popup__label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.veh-popup__value {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.veh-popup__value.mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+/* Battery */
+.veh-popup__battery {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.veh-popup__battery-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+[data-theme="dark"] .veh-popup__battery-bar { background: var(--gray-700); }
+
+.veh-popup__battery-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.veh-popup__battery-pct {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Navigate button */
+.veh-popup__navigate {
+  width: 100%;
+  padding: 9px;
+  background: var(--gray-900);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+[data-theme="dark"] .veh-popup__navigate {
+  background: var(--teal-600);
+}
+.veh-popup__navigate:hover { background: var(--gray-700); }
+[data-theme="dark"] .veh-popup__navigate:hover { background: var(--teal-500); }
