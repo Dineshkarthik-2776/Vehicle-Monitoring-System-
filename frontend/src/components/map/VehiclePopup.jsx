@@ -1,9 +1,10 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import './VehiclePopup.css';
 
-export default function VehiclePopup({ vehicle, onNavigate }) {
+export default function VehiclePopup({ vehicle, onNavigate, onClose }) {
   const loc = vehicle.location;
-  const battery = vehicle.battery_level ?? null;
+  const battery = vehicle.battery_level != null ? parseFloat(vehicle.battery_level) : null;
 
   const batteryColor =
     battery === null ? '#9ca3af' :
@@ -21,7 +22,20 @@ export default function VehiclePopup({ vehicle, onNavigate }) {
           <span className="veh-popup__dot" />
           <span className="veh-popup__vin">{vehicle.vin}</span>
         </div>
-        <span className="veh-popup__badge">In Yard</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="veh-popup__badge">In Yard</span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-muted)', display: 'flex', padding: '2px'
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="veh-popup__rows">

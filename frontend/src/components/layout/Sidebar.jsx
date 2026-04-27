@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Map, BarChart2, Moon, Sun, Plus, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Map, BarChart2, Moon, Sun, Plus, PanelLeftClose, PanelLeft, BatteryCharging } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import AssignUnitModal from '../common/AssignUnitModal';
 import './Sidebar.css';
 
 export default function Sidebar() {
-  const { theme, toggleTheme, connected } = useApp();
+  const { theme, toggleTheme, connected, vehicles, criticalBatteryPcbs } = useApp();
   const [collapsed, setCollapsed] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
   const [search, setSearch] = useState('');
-  const { vehicles } = useApp();
   const navigate = useNavigate();
 
   const filtered = search.trim()
@@ -45,10 +44,8 @@ export default function Sidebar() {
 
         {!collapsed && (
           <>
-            {/* Navigation label */}
             <div className="sidebar__section-label">NAVIGATION</div>
 
-            {/* Nav links */}
             <nav className="sidebar__nav">
               <NavLink to="/" end className={({isActive}) => `sidebar__nav-item ${isActive ? 'active' : ''}`}>
                 <Map size={18}/>
@@ -57,6 +54,13 @@ export default function Sidebar() {
               <NavLink to="/analytics" className={({isActive}) => `sidebar__nav-item ${isActive ? 'active' : ''}`}>
                 <BarChart2 size={18}/>
                 <span>Analytics</span>
+              </NavLink>
+              <NavLink to="/battery" className={({isActive}) => `sidebar__nav-item ${isActive ? 'active' : ''}`}>
+                <BatteryCharging size={18}/>
+                <span>Battery</span>
+                {criticalBatteryPcbs && criticalBatteryPcbs.length > 0 && (
+                  <span className="sidebar__nav-badge">{criticalBatteryPcbs.length}</span>
+                )}
               </NavLink>
             </nav>
 
@@ -85,7 +89,6 @@ export default function Sidebar() {
               )}
             </div>
 
-            {/* Assign button */}
             <button className="sidebar__assign-btn" onClick={() => setShowAssign(true)}>
               <Plus size={16}/>
               Assign Unit
@@ -93,7 +96,6 @@ export default function Sidebar() {
           </>
         )}
 
-        {/* Bottom: dark mode */}
         <div className="sidebar__footer">
           <button className="sidebar__theme-btn" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun size={16}/> : <Moon size={16}/>}

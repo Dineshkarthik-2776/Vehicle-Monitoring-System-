@@ -1,0 +1,318 @@
+.battery-page {
+  padding: 28px 32px 48px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.battery-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.battery-page__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+.battery-page__sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.battery-page__pdf-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: var(--teal-500);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.battery-page__pdf-btn:hover { background: var(--teal-600); }
+
+/* Overview row */
+.battery-page__overview {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* Doughnut card */
+.bat-donut-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 380px;
+}
+
+.bat-donut-card__canvas-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.bat-donut-card__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.bat-donut-card__total {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.bat-donut-card__total-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.bat-donut-card__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bat-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bat-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bat-legend-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+.bat-legend-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 20px;
+  text-align: right;
+}
+
+/* Summary grid */
+.bat-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.bat-summary-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bat-summary-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.bat-summary-card__value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.bat-summary-card__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bat-summary-card__sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Alert banner */
+.bat-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #dc2626;
+  font-size: 13px;
+}
+[data-theme="dark"] .bat-alert {
+  background: rgba(220,38,38,0.1);
+  border-color: rgba(220,38,38,0.25);
+  color: #f87171;
+}
+
+/* Sections */
+.bat-section {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.bat-section--good     { border-color: rgba(20, 184, 138, 0.25); }
+.bat-section--moderate { border-color: rgba(245, 158, 11, 0.25); }
+.bat-section--critical { border-color: rgba(239, 68, 68, 0.25); }
+
+.bat-section__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.bat-section--good .bat-section__header     { background: rgba(20, 184, 138, 0.04); }
+.bat-section--moderate .bat-section__header { background: rgba(245, 158, 11, 0.04); }
+.bat-section--critical .bat-section__header { background: rgba(239, 68, 68, 0.04); }
+
+[data-theme="dark"] .bat-section--good .bat-section__header     { background: rgba(20, 184, 138, 0.07); }
+[data-theme="dark"] .bat-section--moderate .bat-section__header { background: rgba(245, 158, 11, 0.07); }
+[data-theme="dark"] .bat-section--critical .bat-section__header { background: rgba(239, 68, 68, 0.07); }
+
+.bat-section__icon {
+  display: flex;
+  align-items: center;
+}
+
+.bat-section__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bat-section__count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.bat-section__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--bg-primary);
+}
+
+.bat-section__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0;
+  background: var(--border);
+}
+
+/* PCB Card */
+.bat-card {
+  background: var(--bg-primary);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.bat-card:hover { background: var(--bg-secondary); }
+
+.bat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bat-card__id {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+}
+
+.bat-card__status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
+}
+.bat-card__status--good     { background: rgba(20, 184, 138, 0.12); color: #14b88a; }
+.bat-card__status--moderate { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.bat-card__status--critical { background: rgba(239, 68, 68, 0.12);  color: #ef4444; }
+
+.bat-card__level {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.bat-card__bar-wrap {
+  height: 5px;
+  background: var(--gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+[data-theme="dark"] .bat-card__bar-wrap { background: var(--gray-700); }
+
+.bat-card__bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.bat-card__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .battery-page__overview {
+    grid-template-columns: 1fr;
+  }
+  .bat-donut-card {
+    min-width: unset;
+  }
+  .bat-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

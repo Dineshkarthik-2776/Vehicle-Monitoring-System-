@@ -94,6 +94,7 @@
   font-size: 14px;
   font-weight: 500;
   transition: background 0.15s, color 0.15s;
+  position: relative;
 }
 .sidebar__nav-item:hover {
   background: var(--gray-100);
@@ -107,6 +108,19 @@
 [data-theme="dark"] .sidebar__nav-item.active {
   background: rgba(20, 184, 138, 0.12);
   color: var(--teal-400);
+}
+
+/* Critical badge on Battery nav item */
+.sidebar__nav-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
 }
 
 /* Search */

@@ -10,14 +10,17 @@ import './LiveMap.css';
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// Custom truck icon
-function makeTruckIcon(color = '#14b88a') {
+// Custom truck icon — highlight if recently updated
+function makeTruckIcon(color = '#14b88a', pulsing = false) {
   const svg = `<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.15" stroke="${color}" stroke-width="1.5"/>
+    ${pulsing ? `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="2">
+      <animate attributeName="r" from="14" to="19" dur="1.2s" repeatCount="indefinite" />
+      <animate attributeName="fill-opacity" from="0.3" to="0" dur="1.2s" repeatCount="indefinite" />
+    </circle>` : `<circle cx="18" cy="18" r="17" fill="${color}" fill-opacity="0.12" stroke="${color}" stroke-width="1.5"/>`}
     <rect x="10" y="14" width="16" height="10" rx="2" fill="${color}"/>
     <rect x="10" y="14" width="10" height="10" rx="2" fill="${color}" opacity="0.7"/>
     <circle cx="13" cy="25" r="2" fill="white"/>
@@ -47,19 +50,39 @@ export default function LiveMap() {
   const { inYardVehicles } = useApp();
   const [selected, setSelected] = useState(null);
   const [flyTarget, setFlyTarget] = useState(null);
+  // Track recently-updated PCBs for pulse animation (pcb_id → timeout)
+  const [recentUpdates, setRecentUpdates] = useState({});
+  const timerRef = useRef({});
+
+  // Watch for location changes and pulse the marker for 3 seconds
+  useEffect(() => {
+    inYardVehicles.forEach(v => {
+      const loc = v.location;
+      if (!loc) return;
+      const key = `${v.current_pcb_id}-${loc.updated}`;
+      if (timerRef.current[v.current_pcb_id] === key) return; // already seen
+
+      timerRef.current[v.current_pcb_id] = key;
+      setRecentUpdates(prev => ({ ...prev, [v.current_pcb_id]: true }));
+      setTimeout(() => {
+        setRecentUpdates(prev => { const n = { ...prev }; delete n[v.current_pcb_id]; return n; });
+      }, 3000);
+    });
+  }, [inYardVehicles]);
+
+  // Keep selected vehicle data in sync with live updates
+  useEffect(() => {
+    if (!selected) return;
+    const updated = inYardVehicles.find(v => v.vin === selected.vin);
+    if (updated) setSelected(updated);
+  }, [inYardVehicles]);
 
   function handleMarkerClick(v) {
     setSelected(v);
   }
 
   function handleNavigate(v) {
-    if (v.location) {
-      setFlyTarget([v.location.lat, v.location.lng]);
-    }
-  }
-
-  function handleMapClick() {
-    setSelected(null);
+    if (v.location) setFlyTarget([v.location.lat, v.location.lng]);
   }
 
   return (
@@ -69,7 +92,6 @@ export default function LiveMap() {
         zoom={13}
         className="livemap__map"
         zoomControl={false}
-        onClick={handleMapClick}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -91,7 +113,7 @@ export default function LiveMap() {
             />
             <Marker
               position={[v.location.lat, v.location.lng]}
-              icon={makeTruckIcon()}
+              icon={makeTruckIcon('#14b88a', !!recentUpdates[v.current_pcb_id])}
               eventHandlers={{ click: () => handleMarkerClick(v) }}
             />
           </React.Fragment>
@@ -100,7 +122,7 @@ export default function LiveMap() {
         {flyTarget && <FlyTo coords={flyTarget} />}
       </MapContainer>
 
-      {/* Zoom controls (custom, top-right) */}
+      {/* Zoom controls */}
       <div className="livemap__zoom">
         <button onClick={() => document.querySelector('.leaflet-control-zoom-in')?.click()}>+</button>
         <button onClick={() => document.querySelector('.leaflet-control-zoom-out')?.click()}>−</button>
@@ -112,6 +134,7 @@ export default function LiveMap() {
           <VehiclePopup
             vehicle={selected}
             onNavigate={() => { handleNavigate(selected); setSelected(null); }}
+            onClose={() => setSelected(null)}
           />
         </div>
       )}

@@ -3,6 +3,8 @@ import { vehicleApi, pcbApi } from '../services/api';
 
 const AppContext = createContext(null);
 
+const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080';
+
 export function AppProvider({ children }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('al-theme') || 'light');
   const [vehicles, setVehicles] = useState([]);
@@ -11,6 +13,7 @@ export function AppProvider({ children }) {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const pollRef = useRef(null);
+  const wsRef = useRef(null);
 
   /* ── theme ── */
   useEffect(() => {
@@ -30,8 +33,6 @@ export function AppProvider({ children }) {
       setVehicles(vRes.data || []);
       setPcbs(pRes.data || []);
 
-      // Build location map from PCB data (lat/lng come from pcb_location via JOIN if your API returns them)
-      // Here we merge whatever location info is available
       const locMap = {};
       (pRes.data || []).forEach(p => {
         if (p.latitude != null && p.longitude != null) {
@@ -41,7 +42,6 @@ export function AppProvider({ children }) {
             updated: p.last_updated,
           };
         }
-        // Also support nested PCBLocation association
         if (p.PCBLocation) {
           locMap[p.pcb_id] = {
             lat: parseFloat(p.PCBLocation.latitude),
@@ -59,21 +59,101 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  /* ── WebSocket ── */
+  const connectWS = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState < 2) return; // already open/connecting
+
+    const ws = new WebSocket(WS_URL);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('WS connected');
+      setConnected(true);
+    };
+
+    ws.onclose = () => {
+      console.log('WS disconnected, reconnecting in 4s...');
+      setConnected(false);
+      setTimeout(connectWS, 4000);
+    };
+
+    ws.onerror = (err) => {
+      console.error('WS error', err);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === 'LOCATION_UPDATE') {
+          const { pcb_id, vin, latitude, longitude, battery, timestamp } = msg.data;
+
+          // Update pcbLocations live
+          setPcbLocations(prev => ({
+            ...prev,
+            [pcb_id]: {
+              lat: parseFloat(latitude),
+              lng: parseFloat(longitude),
+              updated: timestamp,
+            },
+          }));
+
+          // Update battery level in pcbs list live
+          setPcbs(prev =>
+            prev.map(p =>
+              p.pcb_id === pcb_id
+                ? { ...p, battery_level: battery }
+                : p
+            )
+          );
+
+          // Update vehicle last_movement_at live
+          if (vin) {
+            setVehicles(prev =>
+              prev.map(v =>
+                v.vin === vin
+                  ? { ...v, last_movement_at: timestamp }
+                  : v
+              )
+            );
+          }
+        }
+      } catch (e) {
+        console.error('WS message parse error', e);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     fetchAll();
-    pollRef.current = setInterval(fetchAll, 15000);
-    return () => clearInterval(pollRef.current);
-  }, [fetchAll]);
+    connectWS();
+    // Polling as fallback for REST data (every 30s)
+    pollRef.current = setInterval(fetchAll, 30000);
+    return () => {
+      clearInterval(pollRef.current);
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, [fetchAll, connectWS]);
 
   /* ── derived data ── */
-  // Vehicles with location info (PCB has a known coordinate)
   const vehiclesWithLocation = vehicles.map(v => {
     const loc = pcbLocations[v.current_pcb_id];
-    return { ...v, location: loc || null };
+    const pcb = pcbs.find(p => p.pcb_id === v.current_pcb_id);
+    return {
+      ...v,
+      location: loc || null,
+      battery_level: pcb ? parseFloat(pcb.battery_level) : null,
+    };
   });
 
-  const inYardVehicles  = vehiclesWithLocation.filter(v => v.location != null);
+  const inYardVehicles = vehiclesWithLocation.filter(v => v.location != null);
   const inactiveVehicles = vehiclesWithLocation.filter(v => v.location == null);
+
+  // Battery categories from all PCBs
+  const goodBatteryPcbs     = pcbs.filter(p => parseFloat(p.battery_level) >= 80);
+  const moderateBatteryPcbs = pcbs.filter(p => parseFloat(p.battery_level) < 80 && parseFloat(p.battery_level) > 30);
+  const criticalBatteryPcbs = pcbs.filter(p => parseFloat(p.battery_level) <= 30 && p.battery_level != null);
+  const unknownBatteryPcbs  = pcbs.filter(p => p.battery_level == null);
 
   return (
     <AppContext.Provider value={{
@@ -83,6 +163,10 @@ export function AppProvider({ children }) {
       pcbLocations,
       inYardVehicles,
       inactiveVehicles,
+      goodBatteryPcbs,
+      moderateBatteryPcbs,
+      criticalBatteryPcbs,
+      unknownBatteryPcbs,
       connected,
       loading,
       refresh: fetchAll,
