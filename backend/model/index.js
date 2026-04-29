@@ -1,7 +1,7 @@
 import  Vehicle from "./Vehicle.js";
 import VehicleHistory from "./VehicleHistory.js";
 import PCB from "./PCB.js";
-import PCBLocation  from "./PcbLocation.js";
+import PCBLocation  from "./PCBLocation.js";
 
 
 Vehicle.belongsTo(PCB,{

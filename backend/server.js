@@ -1,50 +1,62 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import http from "http";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
-import http from "http";
 
-
-import {sequelize, connectDB} from './config/DB.js';
+import { sequelize, connectDB } from "./config/DB.js";
 import { initWebSocketServer } from "./websocket/wsServer.js";
-import './model/index.js';
-import './config/mqttClient.js'
+import "./model/index.js";
 
-import pcbRoutes from './routes/pcbRoutes.js';
-import vehicleRoutes from './routes/vehicleRoutes.js';
+// Import MQTT client — connection is established as a side-effect.
+// If TTN credentials are not set, this logs a warning and does nothing.
+import "./config/mqttClient.js";
 
-const app = express();
+import pcbRoutes       from "./routes/pcbRoutes.js";
+import vehicleRoutes   from "./routes/vehicleRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import testRoutes      from "./routes/testRoutes.js";
+
+const app    = express();
 const server = http.createServer(app);
-const swaggerDocument = YAML.load("./swagger.yaml");
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-app.use(express.json());
+// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
+app.use(express.json());
 
-const PORT = 8080;
+// ── Swagger ───────────────────────────────────────────────────────────────────
+try {
+  const swaggerDocument = YAML.load("./swagger.yaml");
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+} catch {
+  console.warn("[Swagger] swagger.yaml not found — /api-docs disabled.");
+}
 
-app.get('/', (req,res) => {
-    res.send("Hello from server!!");
-});
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.get("/", (_req, res) => res.json({ status: "AL Tracker API running" }));
+app.use("/VT/api", pcbRoutes);
+app.use("/VT/api", vehicleRoutes);
+app.use("/VT/api", analyticsRoutes);
+app.use("/VT/api", testRoutes);  // ← remove in production
 
-app.use('/VT/api', pcbRoutes);
-app.use('/VT/api', vehicleRoutes);
+// ── Start ─────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 8080;
 
 (async () => {
-    try{
-        await connectDB();
+  try {
+    await connectDB();
+    await sequelize.sync();
 
-        await sequelize.sync({alter: true});
-        initWebSocketServer(server);
+    // Attach WebSocket server to the same HTTP port as Express
+    initWebSocketServer(server);
 
-        server.listen(PORT, () => {
-            console.log(`Server Running in port: http://localhost:${PORT}`);
-        })
-
-    }catch(e){
-        console.log("Error in DB connection: ", e);
-    }
+    server.listen(PORT, () => {
+      console.log(`[Server] Running at http://localhost:${PORT}`);
+      console.log(`[Server] API docs at  http://localhost:${PORT}/api-docs`);
+    });
+  } catch (e) {
+    console.error("[Server] Startup error:", e);
+    process.exit(1);
+  }
 })();
-
-

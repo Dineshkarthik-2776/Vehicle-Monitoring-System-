@@ -328,11 +328,82 @@
   color: var(--text-muted);
 }
 
+.veh-row__center {
+  display: flex;
+  align-items: center;
+  min-width: 140px;
+  padding: 0 12px;
+}
+
 .veh-row__right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
+}
+
+/* ── Battery mini-bar ── */
+.batt-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.batt-bar__track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gray-100);
+  overflow: hidden;
+}
+[data-theme="dark"] .batt-bar__track {
+  background: var(--gray-700);
+}
+.batt-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.batt-bar__pct {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Chart badge group ── */
+.chart-badge-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.chart-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.chart-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--badge-color, #9ca3af);
+  flex-shrink: 0;
+}
+.chart-badge b {
+  color: var(--text-primary);
+}
+
+/* ── Chart loading state ── */
+.chart-loading {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .veh-row__pcb {
@@ -373,4 +444,234 @@
   .analytics__chart--wide {
     flex: 1 !important;
   }
+}
+
+/* ── Custom Cluster Icons ── */
+.custom-cluster-icon {
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.custom-cluster-icon:hover {
+  transform: scale(1.1);
+}
+
+.custom-cluster-icon span {
+  position: relative;
+  z-index: 2;
+}
+
+.cluster-small {
+  background: rgba(20, 184, 138, 0.75);
+  border: 3px solid rgba(20, 184, 138, 0.95);
+  font-size: 14px;
+}
+
+.cluster-medium {
+  background: rgba(245, 158, 11, 0.75);
+  border: 3px solid rgba(245, 158, 11, 0.95);
+  font-size: 15px;
+}
+
+.cluster-large {
+  background: rgba(239, 68, 68, 0.75);
+  border: 3px solid rgba(239, 68, 68, 0.95);
+  font-size: 16px;
+}
+
+/* ── 5-column stat grid ── */
+.analytics__stats--5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+/* ── Report Dropdown Card ── */
+.report-dropdown-card {
+  position: relative;
+}
+
+.report-dropdown-card__btn {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.report-dropdown-card__btn:hover .stat-card__icon { opacity: 0.85; }
+
+.report-dropdown-card__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.report-dropdown-card__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+}
+.report-dropdown-card__item:hover { background: var(--bg-secondary); }
+.report-dropdown-card__item:disabled { opacity: 0.5; cursor: not-allowed; }
+.report-dropdown-card__item + .report-dropdown-card__item {
+  border-top: 1px solid var(--border);
+}
+
+.report-dropdown-card__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Staged section empty state ── */
+.staged-section__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Staged Vehicles Sections ── */
+.staged-section {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.staged-section--stage1 { border-color: rgba(245, 158, 11, 0.25); }
+.staged-section--stage2 { border-color: rgba(120, 53, 15, 0.25); }
+
+.staged-section__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.staged-section--stage1 .staged-section__header { background: rgba(245, 158, 11, 0.04); }
+.staged-section--stage2 .staged-section__header { background: rgba(120, 53, 15, 0.04); }
+
+[data-theme="dark"] .staged-section--stage1 .staged-section__header { background: rgba(245, 158, 11, 0.07); }
+[data-theme="dark"] .staged-section--stage2 .staged-section__header { background: rgba(120, 53, 15, 0.07); }
+
+.staged-section__icon {
+  display: flex;
+  align-items: center;
+}
+
+.staged-section__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.staged-section__count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.staged-section__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0;
+  background: var(--border);
+}
+
+/* ── Staged Vehicle Card (mirrors bat-card) ── */
+.staged-card {
+  background: var(--bg-primary);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.staged-card:hover { background: var(--bg-secondary); }
+
+.staged-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.staged-card__vin {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+}
+
+.staged-card__badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: 0.02em;
+}
+.staged-card__badge--stage1 { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.staged-card__badge--stage2 { background: rgba(120, 53, 15, 0.12);  color: #78350f; }
+
+.staged-card__days {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.staged-card__bar-wrap {
+  height: 5px;
+  background: var(--gray-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+[data-theme="dark"] .staged-card__bar-wrap { background: var(--gray-700); }
+
+.staged-card__bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.staged-card__meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
 }

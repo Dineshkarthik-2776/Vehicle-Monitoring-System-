@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  Cell, CartesianGrid, RadialBarChart, RadialBar, Legend,
+  Cell, CartesianGrid, Legend,
 } from 'recharts';
-import { BatteryCharging, BatteryFull, BatteryLow, BatteryMedium, Zap, Download } from 'lucide-react';
+import { BatteryCharging, BatteryFull, BatteryLow, BatteryMedium, Zap, Download, AlertTriangle, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { generateBatteryPDF } from '../services/pdfExport';
 import './Battery.css';
@@ -81,16 +82,16 @@ function ChartCard({ title, sub, children }) {
 }
 
 /* ── PCB card ── */
-function PCBCard({ pcb, tier }) {
+function PCBCard({ pcb, tier, onClick }) {
   const battery = pcb.battery_level != null ? parseFloat(pcb.battery_level) : null;
   const barColor =
     tier === 'good'     ? '#14b88a' :
     tier === 'moderate' ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className={`bat-card bat-card--${tier}`}>
+    <div className={`bat-card bat-card--${tier}`} onClick={() => onClick && onClick(pcb.pcb_id)} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <div className="bat-card__top">
-        <span className="bat-card__id">PCB {pcb.pcb_id}</span>
+        <span className="bat-card__id">PCB{pcb.pcb_id}</span>
         <span className={`bat-card__status bat-card__status--${tier}`}>
           {tier === 'good' ? 'Good' : tier === 'moderate' ? 'Moderate' : 'Critical'}
         </span>
@@ -112,7 +113,7 @@ function PCBCard({ pcb, tier }) {
 }
 
 /* ── section ── */
-function BatterySection({ tier, label, icon, pcbs, accent }) {
+function BatterySection({ tier, label, icon, pcbs, accent, onCardClick }) {
   return (
     <div className={`bat-section bat-section--${tier}`}>
       <div className="bat-section__header">
@@ -126,7 +127,7 @@ function BatterySection({ tier, label, icon, pcbs, accent }) {
         <div className="bat-section__empty">No PCBs in this category</div>
       ) : (
         <div className="bat-section__grid">
-          {pcbs.map(p => <PCBCard key={p.pcb_id} pcb={p} tier={tier} />)}
+          {pcbs.map(p => <PCBCard key={p.pcb_id} pcb={p} tier={tier} onClick={onCardClick} />)}
         </div>
       )}
     </div>
@@ -134,7 +135,21 @@ function BatterySection({ tier, label, icon, pcbs, accent }) {
 }
 
 export default function Battery() {
-  const { pcbs, goodBatteryPcbs, moderateBatteryPcbs, criticalBatteryPcbs, unknownBatteryPcbs } = useApp();
+  const { pcbs, vehicles, pcbLocations, goodBatteryPcbs, moderateBatteryPcbs, criticalBatteryPcbs, unknownBatteryPcbs, setSelectVin } = useApp();
+  const navigate = useNavigate();
+  const [search, setSearch] = React.useState('');
+
+  const filteredPcbs = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    const isPcbSearch = q.startsWith('pcb');
+    return pcbs.filter(p => {
+      const matchPcb = isPcbSearch && `pcb${p.pcb_id}`.includes(q);
+      const vehicle = vehicles.find(v => v.current_pcb_id === p.pcb_id);
+      const matchVin = vehicle?.vin.toLowerCase().includes(q);
+      return matchPcb || matchVin;
+    });
+  }, [pcbs, vehicles, search]);
 
   const total = pcbs.length;
   const avgBattery = pcbs.length
@@ -177,16 +192,29 @@ export default function Battery() {
     },
   ];
 
-  /* ── Battery health radial data ── */
-  const radialData = [
-    { name: 'Good',     value: goodBatteryPcbs.length,     fill: '#14b88a' },
-    { name: 'Moderate', value: moderateBatteryPcbs.length, fill: '#f59e0b' },
-    { name: 'Critical', value: criticalBatteryPcbs.length, fill: '#ef4444' },
-  ];
+  const veryCriticalPcbs = pcbs.filter(p => p.battery_level != null && parseFloat(p.battery_level) < 20);
+
+  // Alert when battery is less than 20%
+  useEffect(() => {
+    if (veryCriticalPcbs.length > 0) {
+      const pcbIds = veryCriticalPcbs.map(p => p.pcb_id).join(', ');
+      alert(`⚠️ CRITICAL BATTERY ALERT!\n\nThe following PCBs have battery levels below 20%:\nPCB IDs: ${pcbIds}\n\nPlease recharge immediately.`);
+    }
+  }, [veryCriticalPcbs.length]);
 
   function handleDownloadPDF() {
-    generateBatteryPDF({ pcbs, goodBatteryPcbs, moderateBatteryPcbs, criticalBatteryPcbs, unknownBatteryPcbs, avgBattery });
+    generateBatteryPDF({ pcbs, goodBatteryPcbs, moderateBatteryPcbs, criticalBatteryPcbs, unknownBatteryPcbs, avgBattery, vehicles });
   }
+
+  const handleCardClick = (pcbId) => {
+    const vehicle = vehicles.find(v => v.current_pcb_id === pcbId);
+    if (vehicle) {
+      setSelectVin(vehicle.vin);
+      navigate('/');
+    } else {
+      alert("This PCB is not currently assigned to any vehicle.");
+    }
+  };
 
   return (
     <div className="battery-page">
@@ -198,7 +226,7 @@ export default function Battery() {
         </div>
         <button className="battery-page__pdf-btn" onClick={handleDownloadPDF}>
           <Download size={15}/>
-          Download PDF
+          Battery Report
         </button>
       </div>
 
@@ -246,21 +274,31 @@ export default function Battery() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Battery Health" sub="Good / Moderate / Critical">
-          <ResponsiveContainer width="100%" height={200}>
-            <RadialBarChart
-              cx="50%" cy="50%"
-              innerRadius="25%" outerRadius="90%"
-              data={radialData}
-              startAngle={90} endAngle={-270}
-            >
-              <RadialBar minAngle={8} dataKey="value" cornerRadius={6} label={false}>
-                {radialData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-              </RadialBar>
-              <Tooltip content={<ChartTooltip unit=" PCBs" />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-            </RadialBarChart>
-          </ResponsiveContainer>
+        <ChartCard title="Critical Level Units" sub="PCBs requiring immediate attention">
+          <div style={{ height: '200px', overflowY: 'auto', padding: '10px 0' }}>
+            {criticalBatteryPcbs.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+                <BatteryFull size={32} color="#14b88a" style={{ marginBottom: '8px' }} />
+                <span>No critical batteries!</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {criticalBatteryPcbs.map(p => {
+                  const battery = parseFloat(p.battery_level);
+                  const isVeryLow = battery < 20;
+                  return (
+                    <div key={p.pcb_id} onClick={() => handleCardClick(p.pcb_id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: isVeryLow ? '#fef2f2' : '#fffbeb', border: `1px solid ${isVeryLow ? '#fecaca' : '#fef3c7'}`, borderRadius: '8px', cursor: 'pointer', transition: 'transform 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'} onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <AlertTriangle size={18} color={isVeryLow ? '#ef4444' : '#f59e0b'} />
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>PCB{p.pcb_id}</span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: isVeryLow ? '#ef4444' : '#f59e0b', fontSize: '15px' }}>{battery}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </ChartCard>
       </div>
 
@@ -269,14 +307,38 @@ export default function Battery() {
         <div className="bat-alert">
           <BatteryLow size={16}/>
           <strong>{criticalBatteryPcbs.length} PCB{criticalBatteryPcbs.length > 1 ? 's' : ''} critically low</strong>
-          — immediate attention required. Units: {criticalBatteryPcbs.map(p => `PCB ${p.pcb_id}`).join(', ')}
+          — immediate attention required. Units: {criticalBatteryPcbs.map(p => `PCB${p.pcb_id}`).join(', ')}
         </div>
       )}
 
-      {/* Three sections */}
-      <BatterySection tier="good"     label="Good Battery"     icon={<BatteryFull size={18}/>}   pcbs={goodBatteryPcbs}     accent="#14b88a" />
-      <BatterySection tier="moderate" label="Moderate Battery" icon={<BatteryMedium size={18}/>} pcbs={moderateBatteryPcbs} accent="#f59e0b" />
-      <BatterySection tier="critical" label="Critical Battery" icon={<BatteryLow size={18}/>}    pcbs={criticalBatteryPcbs} accent="#ef4444" />
+      {/* Search Feature */}
+      <div className="analytics__card" style={{ marginBottom: '24px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+        <div className="analytics__search" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', borderBottom: search.trim() ? '1px solid var(--border)' : 'none' }}>
+          <Search size={14} color="var(--text-muted)" />
+          <input 
+            placeholder="Search battery details by VIN or PCB ID..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)} 
+            style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'var(--text-primary)', fontSize: '13px' }} 
+          />
+        </div>
+        {search.trim() && (
+          <div className="analytics__vehicle-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            {filteredPcbs.length === 0 && (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>No units found</div>
+            )}
+            {filteredPcbs.map(p => {
+              const vehicle = vehicles.find(v => v.current_pcb_id === p.pcb_id);
+              const loc = pcbLocations[p.pcb_id];
+              return <BatteryRow key={p.pcb_id} pcb={p} vehicle={vehicle} loc={loc} onClick={() => handleCardClick(p.pcb_id)} />;
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Sections */}
+      <BatterySection tier="good"     label="Good Battery"     icon={<BatteryFull size={18}/>}   pcbs={goodBatteryPcbs}     accent="#14b88a" onCardClick={handleCardClick} />
+      <BatterySection tier="moderate" label="Moderate Battery" icon={<BatteryMedium size={18}/>} pcbs={moderateBatteryPcbs} accent="#f59e0b" onCardClick={handleCardClick} />
     </div>
   );
 }
@@ -300,6 +362,41 @@ function SummaryCard({ color, value, label, sub, icon }) {
       <div className="bat-summary-card__value" style={{ color }}>{value}</div>
       <div className="bat-summary-card__label">{label}</div>
       <div className="bat-summary-card__sub">{sub}</div>
+    </div>
+  );
+}
+
+function BatteryRow({ pcb, vehicle, loc, onClick }) {
+  const battery = pcb.battery_level != null ? parseFloat(pcb.battery_level) : null;
+  const updatedStr = loc?.updated ? new Date(loc.updated).toLocaleString() : '—';
+  
+  const tier = battery == null ? 'Unknown' : battery >= 80 ? 'Good' : battery >= 30 ? 'Moderate' : 'Critical';
+  const tierColor = battery == null ? '#9ca3af' : battery >= 80 ? '#14b88a' : battery >= 30 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div className="veh-row" onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.12s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+      <div style={{ flex: '1', minWidth: '80px', display: 'flex', alignItems: 'center' }}>
+        <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>{vehicle ? vehicle.vin : 'Unassigned'}</span>
+      </div>
+      <div style={{ flex: '2', minWidth: '150px', display: 'flex', alignItems: 'center' }}>
+        {loc ? (
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No GPS data</span>
+        )}
+      </div>
+      <div style={{ flex: '1', minWidth: '100px', display: 'flex', alignItems: 'center' }}>
+        <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>PCB{pcb.pcb_id}</span>
+      </div>
+      <div style={{ flex: '1.5', minWidth: '120px', display: 'flex', alignItems: 'center', color: tierColor, fontWeight: 600, fontSize: '13px' }}>
+        {tier} ({battery != null ? `${battery.toFixed(0)}%` : '—'})
+      </div>
+      <div style={{ flex: '1', minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{updatedStr}</span>
+      </div>
     </div>
   );
 }

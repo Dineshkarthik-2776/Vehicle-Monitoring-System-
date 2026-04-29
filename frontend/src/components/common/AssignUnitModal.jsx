@@ -67,7 +67,7 @@ export default function AssignUnitModal({ onClose }) {
               <option value="">— Choose available PCB —</option>
               {availablePcbs.map(p => (
                 <option key={p.pcb_id} value={p.pcb_id}>
-                  PCB {p.pcb_id} {p.battery_level != null ? `· ${p.battery_level}%` : ''}
+                  PCB{p.pcb_id} {p.battery_level != null ? `· ${p.battery_level}%` : ''}
                 </option>
               ))}
             </select>

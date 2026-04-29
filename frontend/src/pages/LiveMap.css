@@ -10,21 +10,38 @@
   height: 100%;
 }
 
-/* Popup card - overlaid top-left area of map */
-.livemap__popup-wrap {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 800;
-  animation: popIn 0.18s ease;
+/* ── Override Leaflet popup chrome ─────────────────────────────────────────── */
+.vehicle-popup-leaflet .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+  border: 1px solid var(--border, #e5e7eb);
 }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.95) translateY(-4px); }
-  to   { opacity: 1; transform: scale(1)  translateY(0); }
+.vehicle-popup-leaflet .leaflet-popup-content {
+  margin: 0;
+  line-height: 1;
+  width: 272px !important;
 }
 
-/* Zoom controls */
+.vehicle-popup-leaflet .leaflet-popup-tip-container {
+  display: flex;
+  justify-content: center;
+}
+
+.vehicle-popup-leaflet .leaflet-popup-tip {
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  box-shadow: none;
+}
+
+/* Dark mode popup */
+[data-theme="dark"] .vehicle-popup-leaflet .leaflet-popup-content-wrapper {
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* ── Zoom controls ──────────────────────────────────────────────────────────── */
 .livemap__zoom {
   position: absolute;
   bottom: 24px;
@@ -56,7 +73,7 @@
 .livemap__zoom button:hover { background: var(--gray-100); }
 [data-theme="dark"] .livemap__zoom button:hover { background: var(--gray-800); }
 
-/* Stats badge */
+/* ── GPS count badge ──────────────────────────────────────────────────────── */
 .livemap__stats {
   position: absolute;
   bottom: 24px;

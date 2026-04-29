@@ -116,7 +116,8 @@ export function generateAnalyticsPDF({ inYardVehicles, inactiveVehicles, todayEn
   }
 
   drawFooter(doc);
-  doc.save(`al-tracker-analytics-${Date.now()}.pdf`);
+  const timestamp = new Date().toLocaleString('en-IN').replace(/[/,:]/g, '-').replace(/\s/g, '_');
+  doc.save(`al-tracker-analytics-${timestamp}.pdf`);
 }
 
 /* ── Battery PDF ── */
@@ -127,6 +128,7 @@ export function generateBatteryPDF({
   criticalBatteryPcbs,
   unknownBatteryPcbs,
   avgBattery,
+  vehicles,
 }) {
   const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const teal  = [20, 184, 138];
@@ -182,12 +184,19 @@ export function generateBatteryPDF({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [['PCB ID', 'Battery Level', 'Status']],
-      body: criticalBatteryPcbs.map(p => [
-        `PCB ${p.pcb_id}`,
-        p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
-        p.status,
-      ]),
+      head: [['PCB ID', 'Battery', 'Status', 'Latitude', 'Longitude']],
+      body: criticalBatteryPcbs.map(p => {
+        const veh = vehicles?.find(v => v.current_pcb_id === p.pcb_id);
+        const lat = veh?.location?.lat != null ? veh.location.lat.toFixed(5) : '—';
+        const lng = veh?.location?.lng != null ? veh.location.lng.toFixed(5) : '—';
+        return [
+          `PCB ${p.pcb_id}`,
+          p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
+          p.status,
+          lat,
+          lng
+        ];
+      }),
       theme: 'striped',
       headStyles: { fillColor: red, textColor: 255, fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -212,12 +221,19 @@ export function generateBatteryPDF({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [['PCB ID', 'Battery Level', 'Status']],
-      body: moderateBatteryPcbs.map(p => [
-        `PCB ${p.pcb_id}`,
-        p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
-        p.status,
-      ]),
+      head: [['PCB ID', 'Battery', 'Status', 'Latitude', 'Longitude']],
+      body: moderateBatteryPcbs.map(p => {
+        const veh = vehicles?.find(v => v.current_pcb_id === p.pcb_id);
+        const lat = veh?.location?.lat != null ? veh.location.lat.toFixed(5) : '—';
+        const lng = veh?.location?.lng != null ? veh.location.lng.toFixed(5) : '—';
+        return [
+          `PCB ${p.pcb_id}`,
+          p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
+          p.status,
+          lat,
+          lng
+        ];
+      }),
       theme: 'striped',
       headStyles: { fillColor: amber, textColor: 255, fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -241,12 +257,19 @@ export function generateBatteryPDF({
   } else {
     autoTable(doc, {
       startY: y,
-      head: [['PCB ID', 'Battery Level', 'Status']],
-      body: goodBatteryPcbs.map(p => [
-        `PCB ${p.pcb_id}`,
-        p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
-        p.status,
-      ]),
+      head: [['PCB ID', 'Battery', 'Status', 'Latitude', 'Longitude']],
+      body: goodBatteryPcbs.map(p => {
+        const veh = vehicles?.find(v => v.current_pcb_id === p.pcb_id);
+        const lat = veh?.location?.lat != null ? veh.location.lat.toFixed(5) : '—';
+        const lng = veh?.location?.lng != null ? veh.location.lng.toFixed(5) : '—';
+        return [
+          `PCB ${p.pcb_id}`,
+          p.battery_level != null ? `${parseFloat(p.battery_level).toFixed(1)}%` : '—',
+          p.status,
+          lat,
+          lng
+        ];
+      }),
       theme: 'striped',
       headStyles: { fillColor: teal, textColor: 255, fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -255,5 +278,133 @@ export function generateBatteryPDF({
   }
 
   drawFooter(doc);
-  doc.save(`al-tracker-battery-${Date.now()}.pdf`);
+  const timestamp = new Date().toLocaleString('en-IN').replace(/[/,:]/g, '-').replace(/\s/g, '_');
+  doc.save(`al-tracker-battery-${timestamp}.pdf`);
+}
+
+/* ── Past Report (History) PDF ── */
+export function generatePastReportPDF({ history }) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const teal = [20, 184, 138];
+  const gray = [107, 114, 128];
+  const dark = [17, 24, 39];
+
+  drawHeader(doc, 'AL Tracker — Vehicle History Report');
+
+  let y = 32;
+
+  doc.setTextColor(...dark);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Full Vehicle Ledger  —  ${history.length} record(s)`, 14, y);
+  y += 4;
+
+  if (!history || history.length === 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.setFontSize(10);
+    doc.text('No historical data found in the system.', 14, y + 6);
+  } else {
+    autoTable(doc, {
+      startY: y,
+      head: [['VIN', 'Status', 'Assigned At', 'Detached At']],
+      body: history.map(h => {
+        const isCurrent = h.detached_at == null;
+        return [
+          h.vin,
+          isCurrent ? 'ACTIVE' : 'DETACHED',
+          h.assigned_at ? new Date(h.assigned_at).toLocaleString() : '—',
+          h.detached_at ? new Date(h.detached_at).toLocaleString() : '—',
+        ];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: teal, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 9 },
+      margin: { left: 14, right: 14 },
+    });
+  }
+
+  drawFooter(doc);
+  const timestamp = new Date().toLocaleString('en-IN').replace(/[/,:]/g, '-').replace(/\s/g, '_');
+  doc.save(`al-tracker-history-${timestamp}.pdf`);
+}
+
+/* ── Staged Vehicles PDF ── */
+export function generateStagedReportPDF({ stagedVehicles1, stagedVehicles2 }) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const amber = [245, 158, 11];
+  const brown = [120, 53, 15];
+  const gray = [107, 114, 128];
+  const dark = [17, 24, 39];
+
+  drawHeader(doc, 'AL Tracker — Staged Vehicles Report');
+
+  let y = 32;
+
+  doc.setTextColor(...dark);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  const total = stagedVehicles1.length + stagedVehicles2.length;
+  doc.text(`Total Staged Vehicles  —  ${total} unit(s)`, 14, y);
+  y += 4;
+
+  if (total === 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.setFontSize(10);
+    doc.text('No staged vehicles found in the yard.', 14, y + 6);
+    y += 14;
+  } else {
+    if (stagedVehicles2.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...brown);
+      doc.text(`Stage 2 (>30 Days)  —  ${stagedVehicles2.length} unit(s)`, 14, y + 6);
+      y += 10;
+      
+      autoTable(doc, {
+        startY: y,
+        head: [['VIN', 'PCB', 'Days Staged', 'Last Moved/Assigned']],
+        body: stagedVehicles2.map(v => [
+          v.vin,
+          `PCB${v.current_pcb_id}`,
+          `${Math.floor(v.stageDays)} days`,
+          v.last_movement_at ? new Date(v.last_movement_at).toLocaleString() : (v.assigned_at ? new Date(v.assigned_at).toLocaleString() : '—')
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: brown, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9 },
+        margin: { left: 14, right: 14 },
+      });
+      y = doc.lastAutoTable.finalY + 10;
+    }
+
+    if (stagedVehicles1.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...amber);
+      doc.text(`Stage 1 (10-30 Days)  —  ${stagedVehicles1.length} unit(s)`, 14, y);
+      y += 4;
+      
+      autoTable(doc, {
+        startY: y,
+        head: [['VIN', 'PCB', 'Days Staged', 'Last Moved/Assigned']],
+        body: stagedVehicles1.map(v => [
+          v.vin,
+          `PCB${v.current_pcb_id}`,
+          `${Math.floor(v.stageDays)} days`,
+          v.last_movement_at ? new Date(v.last_movement_at).toLocaleString() : (v.assigned_at ? new Date(v.assigned_at).toLocaleString() : '—')
+        ]),
+        theme: 'striped',
+        headStyles: { fillColor: amber, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9 },
+        margin: { left: 14, right: 14 },
+      });
+      y = doc.lastAutoTable.finalY + 10;
+    }
+  }
+
+  drawFooter(doc);
+  const timestamp = new Date().toLocaleString('en-IN').replace(/[/,:]/g, '-').replace(/\s/g, '_');
+  doc.save(`al-tracker-staged-${timestamp}.pdf`);
 }

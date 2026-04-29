@@ -83,6 +83,12 @@
   padding: 0 8px;
 }
 
+/* Collapsed nav: centred icons, no gap labels */
+.sidebar__nav--collapsed {
+  padding: 8px 8px 0;
+  gap: 4px;
+}
+
 .sidebar__nav-item {
   display: flex;
   align-items: center;
@@ -123,6 +129,18 @@
   text-align: center;
 }
 
+/* Collapsed badge — red dot in top-right corner of icon */
+.sidebar__nav-badge--dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1.5px solid var(--bg-sidebar);
+}
+
 /* Search */
 .sidebar__search-wrap {
   padding: 14px 8px 0;
@@ -150,6 +168,20 @@
 }
 .sidebar__search input::placeholder { color: var(--text-muted); }
 
+/* Clear button inside search */
+.sidebar__search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.sidebar__search-clear:hover { color: var(--text-primary); }
+
 .sidebar__search-results {
   position: absolute;
   top: calc(100% + 4px);
@@ -163,6 +195,13 @@
   overflow: hidden;
 }
 
+.sidebar__search-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .sidebar__search-item {
   display: flex;
   justify-content: space-between;
@@ -173,12 +212,21 @@
 }
 .sidebar__search-item:hover { background: var(--gray-50); }
 [data-theme="dark"] .sidebar__search-item:hover { background: rgba(255,255,255,0.05); }
-.search-vin { font-weight: 600; font-size: 13px; }
-.search-pcb { font-size: 11px; color: var(--text-muted); }
+.search-vin  { font-weight: 600; font-size: 13px; display: block; }
+.search-loc  { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; display: block; margin-top: 2px; }
+.search-pcb  { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
 
-/* Assign button */
-.sidebar__assign-btn {
+/* PCB Actions Container */
+.sidebar__pcb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 12px 8px 0;
+}
+
+/* Assign button — expanded */
+.sidebar__assign-btn {
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,6 +244,21 @@
 }
 .sidebar__assign-btn:hover { background: var(--teal-600); }
 .sidebar__assign-btn:active { transform: scale(0.98); }
+
+/* Detach and Swap button variants */
+.sidebar__btn--detach { background: #ef4444; }
+.sidebar__btn--detach:hover { background: #dc2626; }
+.sidebar__btn--swap { background: #f59e0b; }
+.sidebar__btn--swap:hover { background: #d97706; }
+
+/* Assign button — collapsed (icon only, square) */
+.sidebar__assign-btn--icon {
+  margin: 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+}
 
 /* Footer */
 .sidebar__footer {

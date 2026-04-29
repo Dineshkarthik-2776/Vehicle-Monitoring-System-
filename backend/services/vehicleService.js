@@ -1,7 +1,9 @@
 import PCB  from "../model/PCB.js";
+import PCBLocation from "../model/PCBLocation.js";
 import Vehicle from "../model/Vehicle.js";
 import VehicleHistory from "../model/VehicleHistory.js";
 import { sequelize } from "../config/DB.js";
+
 
 function parsePcbId(value) {
     const pcbId = Number(value);
@@ -182,7 +184,7 @@ export async function swapPCB(current_pcb_id, new_pcb_id, vin){
 
         //PCB Fetch
         const currentPCB = await PCB.findByPk(currentPcbId, {transaction});
-        const newPCB = await PCB.findByPk(newPcbId, {trnsactions});
+        const newPCB = await PCB.findByPk(newPcbId, {transaction});
 
         if(!currentPCB){
             throw new Error("Current PCB not found");
@@ -220,34 +222,6 @@ export async function swapPCB(current_pcb_id, new_pcb_id, vin){
             {
                 current_pcb_id: newPcbId,
                 last_movement_at: new Date()
-            },
-            {transaction}
-        );
-
-        // Close Old History
-        const activeHistory = await VehicleHistory.findOne({
-            where:{
-                vin: VIN,
-                detached_at: null
-            },
-            order: [["assigned_at", "DESC"]],
-            transaction
-        });
-
-        if(!activeHistory){
-            throw new Error("No active history found for swap")
-        }
-
-        await activeHistory.update(
-            {detached_at: new Date()},
-            {transaction}
-        );
-
-        // Create New History
-        await VehicleHistory.create(
-            {
-                vin: VIN,
-                assigned_at: new Date()
             },
             {transaction}
         );
@@ -356,7 +330,16 @@ export async function getVehicleByVIN(vin){
             throw new Error("VIN must be a non-empty string");
         }
 
-        const vehicle = await Vehicle.findByPk(VIN);
+        const vehicle = await Vehicle.findByPk(VIN, {
+            include: [{
+                model: PCB,
+                required: false,
+                include: [{
+                    model: PCBLocation,
+                    required: false,
+                }]
+            }]
+        });
 
         if(!vehicle){
             throw new Error("Vehicle not found");
@@ -371,7 +354,16 @@ export async function getVehicleByVIN(vin){
 
 export async function getAllVehicles(){
     try{
-        const vehicles = await Vehicle.findAll();
+        const vehicles = await Vehicle.findAll({
+            include: [{
+                model: PCB,
+                required: false,          // LEFT JOIN — include vehicles with no PCB
+                include: [{
+                    model: PCBLocation,
+                    required: false,      // LEFT JOIN — include PCBs with no location
+                }]
+            }]
+        });
         return vehicles;
     }catch(e){
         throw e;
